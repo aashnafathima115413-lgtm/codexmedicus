@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html>
+<head>
+    <title>Codex Medicus: 8-Minute Shift</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; text-align: center; background: #0d1b2a; color: #e0e1dd; padding: 20px; transition: 0.8s; }
+        #game-container { background: rgba(27, 38, 59, 0.9); padding: 40px; display: inline-block; border-radius: 15px; border: 2px solid #778da9; box-shadow: 0 0 30px rgba(0,0,0,0.5); width: 90%; max-width: 900px; position: relative; }
+        
+        #timer-box { position: absolute; top: 20px; left: 30px; background: #1b263b; padding: 10px 15px; border-radius: 8px; border: 1px solid #e63946; color: #ff4d4d; font-weight: bold; font-size: 1.2em; }
+        #streak-counter { position: absolute; top: 20px; right: 30px; background: #415a77; padding: 10px 15px; border-radius: 8px; border: 1px solid #778da9; color: #80ed99; font-weight: bold; }
+        
+        #word-display { font-size: 2.8em; letter-spacing: 8px; color: #ffffff; white-space: nowrap; margin: 30px 0; }
+        #letters { margin: 20px 0; }
+        button { padding: 12px 16px; margin: 4px; cursor: pointer; background: #415a77; color: white; border: 1px solid #778da9; border-radius: 5px; font-weight: bold; min-width: 45px; }
+        button:hover { background: #778da9; }
+        button:disabled { background: rgba(13, 27, 42, 0.5); color: #415a77; border-color: #415a77; cursor: default; }
+        #message { font-size: 1.4em; color: #80ed99; font-weight: bold; min-height: 1.5em; }
+        #hint-box { color: #cbd5e0; font-style: italic; margin-top: 10px; min-height: 60px; }
+        #leaderboard { margin-top: 30px; border-top: 2px solid #d4af37; padding-top: 20px; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="timer-box">SHIFT TIME: <span id="time-left">08:00</span></div>
+    <div id="streak-counter">STREAK: <span id="streak">0</span></div>
+    
+    <h1 style="margin-top: 40px;">CODEX MEDICUS</h1>
+    <p style="color: #778da9;">Forensic Anatomy Module</p>
+    
+    <div id="word-display">_ _ _ _ _</div>
+    <div id="letters"></div>
+    
+    <p id="message"></p>
+    <div id="hint-box"></div>
+    
+    <p>PATIENT VITAL SIGNS: <span id="lives">7</span>/7</p>
+    
+    <button id="next-btn" onclick="resetGame()" style="background:#e0e1dd; color:#1b263b; width: 100%; letter-spacing: 2px; font-weight: bold;">START NEXT AUTOPSY</button>
+
+    <div id="leaderboard">
+        <h2 style="color: #d4af37;">🏆 HALL OF FAME</h2>
+        <ul id="name-list" style="list-style:none; padding:0;"></ul>
+    </div>
+</div>
+
+<script>
+    const medicalTerms = [
+        {word: "basis", hint: "base/The lower part or foundation of a structure."},   
+        {word: "ala", hint: "wing."},
+        {word: "costa", hint: "rib."},
+        {word: "crista", hint: "crest."},
+        {word: "fibula", hint: "splint-bone."},
+        {word: "fossa", hint: "shallow depression or cavity."},
+        {word: "glandula", hint: "gland."},
+        {word: "lamina", hint: "plate."},
+        {word: "linea", hint: "line."},
+        {word: "mandibula", hint: "lower jaw."},
+        {word: "maxilla", hint: "upper jaw."},
+        {word: "orbita", hint: "eyesocket."},
+        {word: "porta", hint: "entry."},
+        {word: "scapula", hint: "shoulder blade."},
+        {word: "spina", hint: "spine."},
+        {word: "tibia", hint: "shinebone."},
+        {word: "vena", hint: "vein."},   
+        {word: "vertebra", hint: "vertebra."},
+        {word: "apertura", hint: "opening."},
+        {word: "aorta", hint: "main artery of body."},
+        {word: "arteria", hint: "artery."},
+        {word: "capsula", hint: "membrane or saclike structure."},
+        {word: "chorda", hint: "cord."},
+        {word: "cochlea", hint: "cochlea."},
+        {word: "columna", hint: "column."},
+        {word: "concha", hint: "concha."},
+        {word: "fascia", hint: "fascia."},
+        {word: "fovea", hint: "small pit or depression."},
+        {word: "incisura", hint: "notch/slit."},
+        {word: "lingua", hint: "tongue, language."},
+        {word: "nucha", hint: "nape of neck."},
+        {word: "sella", hint: "saddle."},
+        {word: "sutura", hint: "line of junction."},
+        {word: "vagina", hint: "sheath."},
+        {word: "valvula", hint: "small valva."},
+        {word: "angulus", hint: "angle."},
+        {word: "canaliculus", hint: "small canal."},
+        {word: "musculus", hint: "muscle."},
+        {word: "nasus", hint: "nose."},
+        {word: "nucleus", hint: "spheroid body within a cell."},
+        {word: "pediculus", hint: "small foot."},
+        {word: "radius", hint: "thicker and shorter bone of forearm."},
+        {word: "sulcus", hint: "furrow or groove."},
+        {word: "brachium", hint: "upper arm."},
+        {word: "cavum", hint: "cavity."},
+        {word: "collum", hint: "neck."},
+        {word: "cranium", hint: "skull."},
+        {word: "dorsum", hint: "back."},
+        {word: "membrum", hint: "extremity."},
+        {word: "palatum", hint: "palate."},
+        {word: "septum", hint: "partition, dividing wall."},
+        {word: "tuberculum", hint: "small rounded swelling."},
+        {word: "canalis", hint: "A tubular passage or channel through the body."},
+        {word: "caput", hint: "The head portion of an organ or bone."},
+        {word: "corpus", hint: "The main part or 'body'."},
+        {word: "foramen", hint: "An opening."},
+        {word: "os", hint: "bone."},
+        {word: "pars", hint: "A specific part."},
+        {word: "acromion", hint: "shoulder appendix."},
+        {word: "antrum", hint: "cavity."},
+        {word: "gallus", hint: "cock."},
+        {word: "ganglion", hint: "nervous node."},
+        {word: "ligamentum", hint: "Fibrous tissue connecting bone to bone."},
+        {word: "lobus", hint: "A rounded projection or division of an organ."}, 
+        {word: "arcus", hint: "arch."},
+        {word: "aquaeductus", hint: "water duct."},
+        {word: "cornu", hint: "horn; horn-shaped process."},
+        {word: "ductus", hint: "duct."},
+        {word: "meatus", hint: "passage, tract."},
+        {word: "plexus", hint: "network; chiefly of veins and nerves."},
+        {word: "processus", hint: "appendix."},
+        {word: "sinus", hint: "hollow or cavity."},
+        {word: "facies", hint: "surface."},
+        {word: "nodus", hint: "node."},
+        {word: "ramus", hint: "A branch."},
+        {word: "skeleton", hint: "The internal framework of the human body."},
+        {word: "truncus", hint: "The main part of the body/trunk."},
+        {word: "tympanum", hint: "the eardrum."},
+        {word: "vestibulum", hint: "vestibule."},
+    ];
+
+    let currentObj = {};
+    let guessedLetters = [];
+    let lives = 7;
+    let streak = 0;
+    let timeLeft = 480; 
+    let timerInterval;
+    let isGameOver = false;
+
+    let hallOfFame = JSON.parse(localStorage.getItem('medLatinLeaderboard')) || [];
+
+    function cleanLetter(char) {
+        if(!char) return "";
+        return char.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ĭ/g, "i").replace(/ā/g, "a").replace(/ě/g, "e").replace(/ă/g, "a").replace(/ŭ/g, "u").toUpperCase().trim();
+    }
+
+    function startTimer() {
+        if (timerInterval) return;
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                endShift();
+            } else {
+                timeLeft--;
+                updateTimerDisplay();
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        let mins = Math.floor(timeLeft / 60);
+        let secs = timeLeft % 60;
+        document.getElementById('time-left').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function endShift() {
+        isGameOver = true;
+        document.body.style.backgroundColor = "#4a0000";
+        document.getElementById('message').innerText = "SHIFT EXPIRED. ALL VITALS LOST.";
+        document.getElementById('message').style.color = "#ff4d4d";
+        disableButtons();
+        document.getElementById('next-btn').disabled = true;
+    }
+
+    function resetGame() {
+        if (isGameOver) return;
+        startTimer();
+        currentObj = medicalTerms[Math.floor(Math.random() * medicalTerms.length)];
+        guessedLetters = [];
+        lives = 7;
+        document.body.style.backgroundColor = "#0d1b2a";
+        document.getElementById('message').innerText = "";
+        document.getElementById('message').style.color = "#80ed99";
+        document.getElementById('hint-box').innerText = "Hint: " + currentObj.hint;
+        updateDisplay();
+        createButtons();
+    }
+
+    function updateDisplay() {
+        let display = "";
+        let win = true;
+        let cleanWord = currentObj.word.trim();
+
+        for (let char of cleanWord) {
+            let cleanChar = cleanLetter(char);
+            if (guessedLetters.includes(cleanChar)) {
+                display += char.toUpperCase() + " ";
+            } else { 
+                display += "_ "; 
+                win = false; 
+            }
+        }
+        
+        document.getElementById('word-display').innerText = display.trim();
+        document.getElementById('lives').innerText = lives;
+        document.getElementById('streak').innerText = streak;
+
+        if (win && cleanWord.length > 0) {
+            streak++;
+            document.getElementById('streak').innerText = streak;
+            if (streak === 10) {
+                setTimeout(() => {
+                    let name = prompt("SUMMA CUM LAUDE! Enter name:");
+                    if (name) {
+                        hallOfFame.push(`${name} (Streak: 10) - ${new Date().toLocaleDateString()}`);
+                        localStorage.setItem('medLatinLeaderboard', JSON.stringify(hallOfFame));
+                        updateLeaderboard();
+                    }
+                }, 100);
+            }
+            document.getElementById('message').innerText = "VINCIS! (SUBJECT IDENTIFIED)";
+            disableButtons();
+        } else if (lives <= 0) {
+            streak = 0;
+            document.getElementById('streak').innerText = streak;
+            document.getElementById('message').innerText = "FATAL ERROR. TERM WAS: " + currentObj.word.toUpperCase();
+            document.getElementById('message').style.color = "#ff4d4d";
+            disableButtons();
+        }
+    }
+
+    function updateLeaderboard() {
+        const board = document.getElementById('leaderboard');
+        const list = document.getElementById('name-list');
+        if (hallOfFame.length > 0) {
+            board.style.display = "block";
+            list.innerHTML = "";
+            hallOfFame.forEach(entry => {
+                let li = document.createElement("li");
+                li.innerText = "⭐ " + entry;
+                list.appendChild(li);
+            });
+        }
+    }
+
+    function createButtons() {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const container = document.getElementById('letters');
+        container.innerHTML = "";
+        for (let letter of alphabet) {
+            let btn = document.createElement("button");
+            btn.innerText = letter;
+            btn.onclick = () => guess(letter, btn);
+            container.appendChild(btn);
+        }
+    }
+
+    function disableButtons() {
+        const btns = document.querySelectorAll('#letters button');
+        btns.forEach(b => b.disabled = true);
+    }
+
+    function guess(letter, btn) {
+        if (isGameOver || lives <= 0) return;
+        btn.disabled = true;
+        let found = false;
+        let cleanWord = currentObj.word.trim();
+
+        for (let char of cleanWord) {
+            if (cleanLetter(char) === letter) { 
+                found = true; 
+                break; 
+            }
+        }
+
+        if (found) {
+            guessedLetters.push(letter);
+        } else { 
+            lives--; 
+            document.body.style.backgroundColor = lives < 3 ? "#721c24" : "#1b263b"; 
+        }
+        updateDisplay();
+    }
+
+    updateLeaderboard();
+    // Start with a clean UI but wait for user to click "Start" if you prefer, 
+    // or call resetGame() once here to initialize.
+    resetGame();
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
